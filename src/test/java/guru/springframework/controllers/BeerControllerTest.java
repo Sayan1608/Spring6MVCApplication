@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -14,6 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,10 +28,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import guru.springframework.entities.Beer;
 import guru.springframework.model.BeerDto;
 import guru.springframework.services.BeerService;
 import guru.springframework.services.BeerServiceImpl;
@@ -150,5 +155,40 @@ class BeerControllerTest {
 				.accept(MediaType.APPLICATION_JSON))
 		.andExpect(status().isNotFound());
 	}
+	
+	@Test
+	void testBlankOrNullBeerName() throws JsonProcessingException, Exception {
+		BeerDto beerDto = BeerDto.builder()
+				.price(BigDecimal.valueOf(0))
+				.build();
+		
+		given(beerService.saveNewBeer(any(BeerDto.class))).willReturn(beerServiceImpl.listBeers().get(1));
+		
+		MvcResult mvcResult = mockMvc.perform(post(BeerController.BEER_PATH)
+				.accept(MediaType.APPLICATION_JSON)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(beerDto)))
+		.andExpect(jsonPath("$.length()", is(6)))		
+		.andExpect(status().isBadRequest()).andReturn();
+		
+		System.out.println(mvcResult.getResponse().getContentAsString());
+	}
+	
+	@Test
+	void testUpdateBlankBeerName() throws JsonProcessingException, Exception {
+		BeerDto beer = beerServiceImpl.listBeers().get(0);
+		beer.setBeerName("");
+		
+		given(beerService.updateBeer(any(), any())).willReturn(Optional.of(beer));
+		
+		mockMvc.perform(put(BeerController.BEER_PATH_ID, beer.getId())
+				.accept(MediaType.APPLICATION_JSON)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(beer)))
+		.andExpect(status().isBadRequest());
+		
+	}
+	
+	
 
 }

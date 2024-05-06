@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,7 +48,7 @@ public class BeerController {
 	}
 	
 	@PostMapping(BEER_PATH)
-	public ResponseEntity<String> addNewBeer(@RequestBody BeerDto beer){
+	public ResponseEntity<String> addNewBeer(@Validated @RequestBody BeerDto beer){
 		log.debug("addNewBeer method in BeerController is called");
 		BeerDto savedBeer = beerService.saveNewBeer(beer);
 		HttpHeaders headers = new HttpHeaders();
@@ -56,7 +57,7 @@ public class BeerController {
 	}
 	
 	@PutMapping(BEER_PATH_ID)
-	public ResponseEntity<String> updateBeer(@PathVariable("beerId") UUID id, @RequestBody BeerDto beer){
+	public ResponseEntity<String> updateBeer(@PathVariable("beerId") UUID id, @Validated @RequestBody BeerDto beer){
 		log.debug("updating beer with id: " + id );
 		Optional<BeerDto> updatedBeer = beerService.updateBeer(id, beer);
 		if(updatedBeer.isEmpty()) {
